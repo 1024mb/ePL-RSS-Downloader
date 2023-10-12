@@ -10,9 +10,8 @@ import stat
 import subprocess
 import sys
 import xml.dom.minidom
-from urllib import request
-
 from unicodedata import normalize
+from urllib import request
 
 try:
     from PyQt5 import QtGui, QtWidgets, uic
@@ -1266,7 +1265,7 @@ class Servidor(QtWidgets.QMainWindow):
                 # Actualización de barras de progreso
                 if actual <= self.BarraBloque.maximum():
                     self.BarraBloque.setValue(actual)
-                prog_max = (self.BarraTotal.maximum() / 2) + actual
+                prog_max = round(self.BarraTotal.maximum() / 2) + actual
                 if prog_max <= self.BarraTotal.maximum():
                     self.BarraTotal.setValue(prog_max)
                 # Comprobación de borrados
