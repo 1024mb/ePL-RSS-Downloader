@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import imp
 import json
 import os
 import re
@@ -10,8 +9,9 @@ import stat
 import subprocess
 import sys
 import xml.dom.minidom
-from unicodedata import normalize
 from urllib import request
+
+from unicodedata import normalize
 
 try:
     from PyQt5 import QtGui, QtWidgets, uic
@@ -23,23 +23,23 @@ except:
 # Declaración de constantes
 NUM_ENLACES = 300
 VELOCIDAD = 5
-VERSION = "3.3"
+VERSION = "3.5"
 TORRENT_CLIENTE = ""
-RSS_links = {"RSS semanal": "http://rss.epublibre.org/rss/semanal",
-             "RSS mensual": "http://rss.epublibre.org/rss/mensual",
-             "RSS total": "http://rss.epublibre.org/rss/completo"}
-TRACKERS = ['http://tracker.openbittorrent.com:80/announce',
-            'udp://tracker.openbittorrent.com:6969/announce',
-            'udp://tracker.torrent.eu.org:451',
-            'udp://open.demonii.com:1337',
-            'udp://tracker.opentrackr.org:1337/announce',
-            'udp://tracker.cyberia.is:6969/announce'
+RSS_links = {"RSS semanal": "https://rss.epublibre.org/rss/semanal",
+             "RSS mensual": "https://rss.epublibre.org/rss/mensual",
+             "RSS total": "https://rss.epublibre.org/rss/completo"}
+TRACKERS = ["http://tracker.openbittorrent.com:80/announce",
+            "udp://tracker.openbittorrent.com:6969/announce",
+            "udp://tracker.torrent.eu.org:451",
+            "udp://open.demonii.com:1337",
+            "udp://tracker.opentrackr.org:1337/announce",
+            "udp://tracker.cyberia.is:6969/announce"
             ]
 
 
 # Función auxiliar para obtener el directorio de ejecución del script
 def directorio_ex():
-    if hasattr(sys, "frozen") or hasattr(sys, "importers") or imp.is_frozen("__main__"):
+    if hasattr(sys, "frozen") or hasattr(sys, "importers"):
         return os.path.dirname(sys.executable)
     else:
         return os.path.dirname(os.path.realpath(__file__))
@@ -49,7 +49,8 @@ class Acerca_de(QtWidgets.QDialog):
     def __init__(self):
         super(Acerca_de, self).__init__()
 
-        uic.loadUi('about.ui', self)
+        about_ui_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "about.ui"))
+        uic.loadUi(about_ui_path, self)
         self.LbVersion.setText('Versión ' + VERSION + ' (Bisky & volante)')
         self.show()
 
@@ -59,7 +60,9 @@ class Ventana_opciones(QtWidgets.QDialog):
     def __init__(self, trackers, trackers_defecto, rss):
         super(Ventana_opciones, self).__init__()
 
-        uic.loadUi('opciones.ui', self)
+        opciones_ui_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "opciones.ui"))
+        uic.loadUi(opciones_ui_path, self)
+
         if trackers_defecto:
             self.checkBoxTrackers.setChecked(True)
         else:
@@ -115,11 +118,12 @@ class DownloadThread(QThread):
             req = request.urlretrieve(self.link, "epublibre.rss", self.reporte)
             self.parent.fl = os.path.join(directorio_ex(), "epublibre.rss")
             self.parent.estado_descarga = True
-        except:
+        except Exception as e:
+            print(e)
             self.parent.estado_descarga = False
 
     def reporte(self, blocknum, blocksize, totalsize):
-        percent = blocknum * blocksize * 100 / totalsize
+        percent = round(blocknum / (blocksize / totalsize))
         self.parent.BarraBloque.setValue(percent)
 
 
@@ -143,7 +147,8 @@ class Servidor(QtWidgets.QMainWindow):
         self.rss_links = RSS_links
         self.dir_biblio = ''
         self.dir_duplicados = ''
-        uic.loadUi('servidor.ui', self)
+        servidor_ui_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'servidor.ui'))
+        uic.loadUi(servidor_ui_path, self)
         self.initUI()
 
     def initUI(self):
@@ -186,7 +191,7 @@ class Servidor(QtWidgets.QMainWindow):
         self.OpcionesServidor.setDisabled(True)
         self.ContPestanas.setTabEnabled(1, False)
         self.menubar.setDisabled(True)
-        # Doy el número de pasos a las barra parcial
+        # Doy el número de pasos a la barra parcial
         self.BarraBloque.setMaximum(100)
         self.BarraTotal.setValue(0)
         self.BarraBloque.setValue(0)
@@ -209,8 +214,9 @@ class Servidor(QtWidgets.QMainWindow):
                 self.OpcionesServidor.setEnabled(True)
                 self.ContPestanas.setTabEnabled(1, True)
                 self.menubar.setEnabled(True)
-        except:
+        except Exception as e:
             self.muestra_mensaje('Error en la descarga del archivo del RSS', 'red')
+            self.muestra_mensaje(e, 'red')
             # Habilitar / Deshabilitar botones y menús
             self.OpcionesArchivos.setEnabled(True)
             self.BotonComenzar.setEnabled(True)
