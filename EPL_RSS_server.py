@@ -23,7 +23,7 @@ except:
 # Declaración de constantes
 NUM_ENLACES = 300
 VELOCIDAD = 5
-VERSION = "3.5"
+VERSION = "3.6"
 TORRENT_CLIENTE = ""
 RSS_links = {"RSS semanal": "https://rss.epublibre.org/rss/semanal",
              "RSS mensual": "https://rss.epublibre.org/rss/mensual",
@@ -115,7 +115,7 @@ class DownloadThread(QThread):
 
     def run(self):
         try:
-            req = request.urlretrieve(self.link, "epublibre.rss", self.reporte)
+            request.urlretrieve(self.link, "epublibre.rss", self.reporte)
             self.parent.fl = os.path.join(directorio_ex(), "epublibre.rss")
             self.parent.estado_descarga = True
         except Exception as e:
@@ -149,6 +149,8 @@ class Servidor(QtWidgets.QMainWindow):
         self.dir_duplicados = ''
         servidor_ui_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'servidor.ui'))
         uic.loadUi(servidor_ui_path, self)
+        icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'torrent.ico'))
+        self.setWindowIcon(QtGui.QIcon(icon_path))
         self.initUI()
 
     def initUI(self):
@@ -493,7 +495,7 @@ class Servidor(QtWidgets.QMainWindow):
                 self.muestra_mensaje('Procesando archivo ' + self.fl + '...')
                 QtWidgets.QApplication.processEvents()
                 # Procesar el archivo, dependiendo de su tipo
-                nombre_archivo, extension = os.path.splitext(self.fl)
+                _, extension = os.path.splitext(self.fl)
                 if extension.lower() == '.rss':
                     exito = self.readFile_XML(self.fl)
                 else:
@@ -526,7 +528,6 @@ class Servidor(QtWidgets.QMainWindow):
         # Mostrar mensaje en área de notificación en el color indicado
         self.AreaMensajes.setTextColor(QtGui.QColor(color))
         self.AreaMensajes.append(mensaje)
-        return
 
     def lanza_enlace(self):
         # Enviar enlace al programa torrent
@@ -621,7 +622,8 @@ class Servidor(QtWidgets.QMainWindow):
             self.ContPestanas.setTabEnabled(1, False)
             self.menubar.setDisabled(True)
             self.BarraTotal.setValue(0)
-            # Si está marcada la opción de comprobar con la biblioteca descargada, realiza las comprobaciones pertinentes
+            # Si está marcada la opción de comprobar con la biblioteca descargada, realiza las comprobaciones
+            # pertinentes
             if self.CompBiblio.isChecked():
                 self.filtrar_libros()
             # Doy el número de pasos a las barras total y parcial
@@ -715,7 +717,8 @@ class Servidor(QtWidgets.QMainWindow):
         # Confirmar la detención
         if not fin_normal:
             elegido = QtWidgets.QMessageBox.question(None, "Reiniciar proceso",
-                                                     "¿Estás seguro de que quieres reiniciar el proceso? (el estado actual se perderá)",
+                                                     "¿Estás seguro de que quieres reiniciar el proceso? (el estado "
+                                                     "actual se perderá)",
                                                      QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                                                      QtWidgets.QMessageBox.No)
             if elegido == QtWidgets.QMessageBox.No:
@@ -793,7 +796,8 @@ class Servidor(QtWidgets.QMainWindow):
         # Confirmar la carga
         if archivo == "estado.sta":
             elegido = QtWidgets.QMessageBox.question(None, "Cargar estado anterior",
-                                                     "¿Estás seguro de que quieres cargar el estado anterior? (el estado actual se perderá)",
+                                                     "¿Estás seguro de que quieres cargar el estado anterior? (el "
+                                                     "estado actual se perderá)",
                                                      QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                                                      QtWidgets.QMessageBox.No)
             if elegido == QtWidgets.QMessageBox.No:
@@ -999,7 +1003,8 @@ class Servidor(QtWidgets.QMainWindow):
                     self.muestra_mensaje('El archivo indicado no es el RSS de Epublibre', 'red')
                     midom.unlink()
                     return exito
-                # Comprobación de que no se trata de un archivo de error por haber sobrepasado el límite de descargas del fichero
+                # Comprobación de que no se trata de un archivo de error por haber sobrepasado el límite de descargas
+                # del fichero
                 descripcion = canal.getElementsByTagName("description").item(0).firstChild.data
                 if 'Se ha superado el número de descargas diarias' in descripcion:
                     self.muestra_mensaje(
@@ -1025,19 +1030,19 @@ class Servidor(QtWidgets.QMainWindow):
                     if nodo_atributo is not None:
                         titulo = nodo_atributo.firstChild.wholeText
                         # Borrado de salto de línea del principio
-                        titulo = re.sub("^\\n", '', titulo)
+                        titulo = re.sub(r"^\n", '', titulo)
                         # Borrado de los géneros
-                        titulo = re.sub("\[(.)*\]", '', titulo)
+                        titulo = re.sub(r"\[.*\]", '', titulo)
                         # Borrado de salto de línea y espacios del final
-                        datos_item["titulo"] = self.normalizar(re.sub("\\n+( )+$", '', titulo))
+                        datos_item["titulo"] = self.normalizar(re.sub(r"\n+\s+$", '', titulo))
                     # Lectura del autor
                     nodo_atributo = item.getElementsByTagName("autor").item(0)
                     if nodo_atributo is not None:
                         autor = nodo_atributo.firstChild.wholeText
                         # Borrado de salto de línea del principio
-                        autor = re.sub("^\\n", '', autor)
+                        autor = re.sub(r"^\n", '', autor)
                         # Borrado de salto de línea y espacios del final
-                        datos_item["autor"] = self.normalizar(re.sub("\\n+( )+$", '', autor))
+                        datos_item["autor"] = self.normalizar(re.sub(r"\n+( )+$", '', autor))
                     # Lectura de la versión
                     nodo_atributo = item.getElementsByTagName("rev").item(0)
                     if nodo_atributo is not None:
@@ -1047,14 +1052,14 @@ class Servidor(QtWidgets.QMainWindow):
                     if nodo_atributo is not None:
                         enlace = nodo_atributo.firstChild.wholeText
                         # Borrado del salto de línea del principio
-                        enlace = re.sub("^\\n", '', enlace)
+                        enlace = re.sub(r"^\n", '', enlace)
                         # Borrado del salto de línea y espacios del final
-                        enlace = re.sub("\\n+( )+$", '', enlace)
+                        enlace = re.sub(r"\n+( )+$", '', enlace)
                         # Extracción de la cadena del HASH y el EPL_ID
                         enl = re.search("btih:(.*?)&dn=", enlace)
                         if enl:
                             datos_item["enlace"] = enl.group(1)
-                        epl_id = re.search("&dn=EPL_\[(.*?)\]", enlace)
+                        epl_id = re.search(r"&dn=EPL_\[(.*?)\]", enlace)
                         if epl_id:
                             datos_item["epl_id"] = epl_id.group(1)
 
@@ -1087,9 +1092,9 @@ class Servidor(QtWidgets.QMainWindow):
         try:
             linea = f.readline()
             # Borrado de comilla del principio
-            linea = re.sub('^"', '', linea)
+            linea = re.sub(r"^\"", "", linea)
             # Borrado de salto de línea y espacios del final
-            linea = re.sub('"\\n+( )*$', '', linea)
+            linea = re.sub(r"\"\n+\s*$", "", linea)
             encabezados = linea.split('","')
             try:
                 ind_epl_id = encabezados.index("EPL Id")
@@ -1111,9 +1116,9 @@ class Servidor(QtWidgets.QMainWindow):
                 if not linea:
                     break
                 # Borrado de comilla del principio
-                linea = re.sub('^"', '', linea)
+                linea = re.sub(r"^\"", "", linea)
                 # Borrado de salto de línea y espacios del final
-                linea = re.sub('"\\n+( )*$', '', linea)
+                linea = re.sub(r"\"\n+\s*$", "", linea)
                 contenido = linea.split('","')
                 enlaces = contenido[ind_enlace].split(', ')
                 for enl in enlaces:
@@ -1143,6 +1148,7 @@ class Servidor(QtWidgets.QMainWindow):
         try:
             self.lista_archivos = []
             ficheros = os.listdir(self.dir_biblio)
+            ficheros.sort()
             # Doy el número de pasos a las barras total y parcial
             if not incluir_autor:
                 self.BarraTotal.setMaximum(2 * len(ficheros))
@@ -1159,24 +1165,24 @@ class Servidor(QtWidgets.QMainWindow):
                     archivo['ext'] = ext.replace('.', '').strip()
                     # Extraigo la versión del nombre
                     nom = nom.strip()
-                    coinc = re.search("\([rv]([0-9]*\.[0-9]*)(.*?)\)$", nom)
+                    coinc = re.search(r"\([rv](\d*\.\d*)(.*?)\)(\s\[[^\]]+\])?$", nom)
                     if coinc:
                         archivo['version'] = coinc.group(1)
-                        nom = re.sub("\([rv]([0-9]*\.[0-9]*)(.*?)\)$", '', nom).strip()
+                        nom = re.sub(r"\([rv](\d*\.\d*)(.*?)\)(\s\[[^\]]+\])?$", '', nom).strip()
                     # Extraigo el ID si existe
-                    coinc = re.search("\[([0-9]*)\]$", nom)
+                    coinc = re.search(r"\[(\d*)\]$", nom)
                     if coinc:
                         archivo['ID'] = coinc.group(1)
-                        nom = re.sub("\[([0-9]*)\]$", '', nom).strip()
+                        nom = re.sub(r"\[(\d*)\]$", '', nom).strip()
                     archivo['titulo_comp'] = nom
                     archivo['nombre'] = fichero
                     if incluir_autor:
                         try:
                             # Elimino las colecciones e IDs
-                            nom = re.sub("\[(.*?)\]", '', nom)
-                            partes = nom.split(' - ', 1)
+                            nom = re.sub(r"\[(.*?)\]", "", nom)
+                            partes = nom.split(" - ", 1)
                             if len(partes) < 2:
-                                partes = nom.split('- ', 1)
+                                partes = nom.split("- ", 1)
                                 if len(partes) < 2:
                                     partes = nom.split(' -', 1)
                                     if len(partes) < 2:
@@ -1243,13 +1249,16 @@ class Servidor(QtWidgets.QMainWindow):
                                         coincidencias.append(i)
                                     else:
                                         elegido = QtWidgets.QMessageBox.question(None, "Coincidencia parcial",
-                                                                                 "Los siguientes archivos tienen el mismo ID (%s), pero su título no coincide:\r\n" %
+                                                                                 "Los siguientes archivos tienen el "
+                                                                                 "mismo ID (%s), pero su título no "
+                                                                                 "coincide:\r\n" %
                                                                                  self.lista_archivos[actual]['ID']
                                                                                  + self.lista_archivos[actual][
                                                                                      'titulo_comp'] + "\r\n" +
                                                                                  self.lista_archivos[i][
                                                                                      'titulo_comp'] + "\r\n"
-                                                                                 + "¿Se tratan en realidad del mismo libro?",
+                                                                                 + "¿Se tratan en realidad del mismo "
+                                                                                   "libro?",
                                                                                  QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                                                                                  QtWidgets.QMessageBox.No)
                                         if elegido == QtWidgets.QMessageBox.Yes:
@@ -1298,10 +1307,10 @@ class Servidor(QtWidgets.QMainWindow):
         # Localización de los que hay que borrar
         for indice in coincidencias[1:]:
             if ('version' in self.lista_archivos[indice]) and ('version' in self.lista_archivos[ind_max]):
-                if (self.lista_archivos[indice]['version'] > self.lista_archivos[ind_max]['version']):
+                if self.lista_archivos[indice]['version'] > self.lista_archivos[ind_max]['version']:
                     elem_borrar.append(ind_max)
                     ind_max = indice
-                elif (self.lista_archivos[indice]['version'] < self.lista_archivos[ind_max]['version']):
+                elif self.lista_archivos[indice]['version'] < self.lista_archivos[ind_max]['version']:
                     elem_borrar.append(indice)
         # Borrado de elementos
         for i in range(len(elem_borrar) - 1, -1, -1):
@@ -1331,8 +1340,8 @@ class Servidor(QtWidgets.QMainWindow):
                                      self.lista_archivos[elem_borrar[i]]['nombre'] + ':', 'red')
                 self.muestra_mensaje(str(ex), 'red')
             del self.lista_archivos[elem_borrar[i]]
-        # Aumento del índice actual global sólo si no se ha borrado el elemento actual
-        if not (coincidencias[0] in elem_borrar):
+        # Aumento del índice actual global solo si no se ha borrado el elemento actual
+        if coincidencias[0] not in elem_borrar:
             ind_actual += 1
         return ind_actual
 
@@ -1344,7 +1353,8 @@ class Servidor(QtWidgets.QMainWindow):
         if exito:
             self.filtrado = True
             mensaje = 'Realizando filtrado de enlaces comparándolos con los ya descargados...\n'
-            mensaje += 'Puede llevar un rato, especialmente trabajando con el RSS o CSV total. Al principio va muy lento, pero luego acelera (prometido) ;)'
+            mensaje += ('Puede llevar un rato, especialmente trabajando con el RSS o CSV total. Al principio va muy '
+                        'lento, pero luego acelera (prometido) ;)')
             self.muestra_mensaje(mensaje, 'black')
             exito = self.filtrar_lista()
             if exito:
@@ -1377,7 +1387,8 @@ class Servidor(QtWidgets.QMainWindow):
                                     del self.lista_archivos[j]
                                     break
                                 else:
-                                    msj = 'Se encontraron dos libros con el mismo ID, pero cuyos títulos y/o autores no coinciden exactamente'
+                                    msj = ('Se encontraron dos libros con el mismo ID, pero cuyos títulos y/o autores '
+                                           'no coinciden exactamente')
                                     msj += ', por lo que el enlace no será filtrado:\n'
                                     msj += '[%s]\n' % self.lista_libros[i]['epl_id']
                                     msj += 'En RSS/CSV : ' + self.lista_libros[i]['autor'] + ' - ' + \
@@ -1403,38 +1414,38 @@ class Servidor(QtWidgets.QMainWindow):
             return False
 
     def normalizar(self, cadena):
-        # Normaliza una cadena de texto dejando sólo caracteres ASCII, paréntesis y guiones
+        # Normaliza una cadena de texto dejando solo caracteres ASCII, paréntesis y guiones
         buscar = "ÃÀÁÄÂĀÅĂĄǍǞǠǺȦǢÈÉËÊĒĔĖĘĚÌÍÏÎĪĨĬĮİǏÒÓÖÔŌŎŐƠǑǪǬȪȬȮȰÙÚÜÛŪǕŨŬŮŰŲƯǓǕǗǙǛãàáäâāåăąǎǟǡǻȧǣèéëêēĕėęěìíïîīĩĭįǐòóöôōŏőơǒǫǭȫȭȯȱøùúüûūǖũŭůűųưǔǖǘǚǜÑñÇçłȲȳ-"
-        sustit = "AAAAAAAAAAAAAAAEEEEEEEEEIIIIIIIIIIOOOOOOOOOOOOOOOUUUUUUUUUUUUUUUUUaaaaaaaaaaaaaaaeeeeeeeeeiiiiiiiiioooooooooooooooouuuuuuuuuuuuuuuuunncclYy "
+        sustit = "AAAAAAAAAAAAAAAEEEEEEEEEIIIIIIIIIIOOOOOOOOOOOOOOOUUUUUUUUUUUUUUUUUaaaaaaaaaaaaaaaeeeeeeeeeiiiiiiiiioooooooooooooooouuuuuuuuuuuuuuuuunncclYy"
         cadena = cadena.replace("´", "")
         for i in range(len(buscar)):
             cadena = cadena.replace(buscar[i], sustit[i])
         cadena = normalize('NFKD', cadena).encode('ascii', 'ignore').decode('utf-8', 'ignore')
-        cadena = re.sub('[^A-Za-z0-9\s\&]+', '', cadena).strip()
-        cadena = re.sub('\s+', ' ', cadena)
+        cadena = re.sub(r"[^A-Za-z0-9\s&]+", "", cadena).strip()
+        cadena = re.sub(r"\s+", " ", cadena)
         return cadena
 
     def comparar_titulo_autor(self, titulo1, autor1, titulo2, autor2):
         # Comparar títulos y autores, para ver si coinciden ambos
-        titulo1 = re.sub(r'\s0+(\d)', r' \1', titulo1.lower())
-        titulo2 = re.sub(r'\s0+(\d)', r' \1', titulo2.lower())
+        titulo1 = re.sub(r"\s0+(\d)", r" \1", titulo1.lower())
+        titulo2 = re.sub(r"\s0+(\d)", r" \1", titulo2.lower())
         autor1 = autor1.lower()
         autor2 = autor2.lower()
         if (titulo1 == titulo2) and (autor1 == autor2):
             return True
-        if not (titulo1 in titulo2) and not (titulo2 in titulo1):
+        if titulo1 not in titulo2 and titulo2 not in titulo1:
             return False
-        if not (autor1 in autor2) and not (autor2 in autor1):
+        if autor1 not in autor2 and autor2 not in autor1:
             if ' & ' in autor1:
                 coinc = True
                 c_aut1 = autor1.split(' & ')
                 for aut1 in c_aut1:
-                    if not aut1 in autor2:
+                    if aut1 not in autor2:
                         coinc = False
                 if not coinc:
                     c_aut2 = autor2.split(' & ')
                     for aut2 in c_aut2:
-                        if not aut2 in autor1:
+                        if aut2 not in autor1:
                             return False
             else:
                 return False
